@@ -1,0 +1,70 @@
+name: Demo Expiration Check
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-expiration:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Check if demo expired
+        id: check
+        run: |
+          EXPIRE_DATE="2026-02-22"
+          TODAY=$(date +%Y-%m-%d)
+          
+          if [[ "$TODAY" > "$EXPIRE_DATE" ]]; then
+            echo "expired=true" >> $GITHUB_OUTPUT
+          else
+            echo "expired=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Update README with expiration notice
+        if: steps.check.outputs.expired == 'true'
+        run: |
+          cat > EXPIRED_NOTICE.md << 'EOF'
+          # EXPIRED DEMONSTRATION PROJECT
+          
+          This demo expired on its 30-day lifecycle date.
+          
+          **Status:** Archived and made private
+          
+          **Reason for Expiration:**
+          - Snowflake features evolve rapidly
+          - Syntax and best practices may be outdated
+          - Demo designed for specific meeting/use case
+          
+          **For Current Snowflake Demos:**
+          Contact your Snowflake Solutions Engineer or visit:
+          - [Snowflake Documentation](https://docs.snowflake.com)
+          - [Quickstarts](https://quickstarts.snowflake.com)
+          EOF
+          
+          mv README.md README_ORIGINAL.md
+          cat EXPIRED_NOTICE.md README_ORIGINAL.md > README.md
+          git config user.name "Demo Expiration Bot"
+          git config user.email "se-community@snowflake.example"
+          git add README.md
+          git commit -m "chore: mark demo as expired"
+          git push
+      
+      - name: Archive and make private
+        if: steps.check.outputs.expired == 'true'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.repos.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              description: 'EXPIRED DEMO - Contact Snowflake SE for current versions',
+              archived: true,
+              private: true
+            });

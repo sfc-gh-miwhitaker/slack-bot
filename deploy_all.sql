@@ -6,6 +6,11 @@
  * EXPIRES: 2026-02-22
  * PURPOSE: Reference implementation for integrating Snowflake Cortex Agents with Slack
  *
+ * OWNERSHIP:
+ *   - ACCOUNTADMIN: Creates role and API integration only
+ *   - SYSADMIN: Owns all infrastructure (database, schemas, warehouse, git repo)
+ *   - cortex_agent_slack_role: Owns application objects (tables, views, agents)
+ *
  * DEPLOYMENT INSTRUCTIONS:
  * 1. Open Snowsight (https://app.snowflake.com)
  * 2. Copy this ENTIRE script
@@ -32,38 +37,45 @@ SELECT
 -- SCOPE CONFIRMATION
 -- ============================================================================
 -- This script creates objects in:
---   - Database: SNOWFLAKE_EXAMPLE (shared demo database)
---   - Schema:   SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK (project-specific)
---   - Schema:   SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS (shared semantic views)
---   - Warehouse: SFE_CORTEX_AGENT_SLACK_WH (isolated compute)
---   - Role:      cortex_agent_slack_role (project-specific permissions)
+--   - Database: SNOWFLAKE_EXAMPLE (shared demo database, owned by SYSADMIN)
+--   - Schema:   SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK (owned by SYSADMIN)
+--   - Schema:   SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS (owned by SYSADMIN)
+--   - Warehouse: SFE_CORTEX_AGENT_SLACK_WH (owned by SYSADMIN)
+--   - Role:      cortex_agent_slack_role (app role for runtime)
 --   - Agent:     SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.medical_assistant
 --
 -- Your existing databases, schemas, and data are NOT modified.
 -- ============================================================================
 
-SELECT 'SAFE TO RUN: All objects will be created in SNOWFLAKE_EXAMPLE database only.' AS confirmation;
-
 -- ============================================================================
--- SECTION 1: GIT REPOSITORY INTEGRATION
+-- SECTION 1: ACCOUNTADMIN - API INTEGRATION ONLY
 -- ============================================================================
 USE ROLE ACCOUNTADMIN;
 
--- Create shared demo database and Git infrastructure
-CREATE DATABASE IF NOT EXISTS SNOWFLAKE_EXAMPLE
-    COMMENT = 'DEMO: Shared demo database for SE examples';
-
-CREATE SCHEMA IF NOT EXISTS SNOWFLAKE_EXAMPLE.GIT_REPOS
-    COMMENT = 'DEMO: Shared Git repository integrations';
-
--- Create API integration for GitHub (reusable across demos)
+-- API integrations require ACCOUNTADMIN
 CREATE API INTEGRATION IF NOT EXISTS SFE_GIT_API_INTEGRATION
     API_PROVIDER = git_https_api
     API_ALLOWED_PREFIXES = ('https://github.com/sfc-gh-miwhitaker/')
     ENABLED = TRUE
     COMMENT = 'DEMO: GitHub API integration for SE demos';
 
--- Create Git repository for this demo
+-- Grant integration usage to SYSADMIN
+GRANT USAGE ON INTEGRATION SFE_GIT_API_INTEGRATION TO ROLE SYSADMIN;
+
+-- ============================================================================
+-- SECTION 2: SYSADMIN - GIT REPOSITORY INFRASTRUCTURE
+-- ============================================================================
+USE ROLE SYSADMIN;
+
+-- Create shared demo database (SYSADMIN owns)
+CREATE DATABASE IF NOT EXISTS SNOWFLAKE_EXAMPLE
+    COMMENT = 'DEMO: Shared demo database for SE examples';
+
+-- Create Git infrastructure schema (SYSADMIN owns)
+CREATE SCHEMA IF NOT EXISTS SNOWFLAKE_EXAMPLE.GIT_REPOS
+    COMMENT = 'DEMO: Shared Git repository integrations';
+
+-- Create Git repository for this demo (SYSADMIN owns)
 CREATE OR REPLACE GIT REPOSITORY SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO
     API_INTEGRATION = SFE_GIT_API_INTEGRATION
     ORIGIN = 'https://github.com/sfc-gh-miwhitaker/slack-bot.git'
@@ -72,45 +84,31 @@ CREATE OR REPLACE GIT REPOSITORY SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_
 -- Fetch latest from repository
 ALTER GIT REPOSITORY SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO FETCH;
 
--- List available files
-SELECT 'Repository files:' AS info;
+-- Verify repository contents
 LS @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/;
 
 -- ============================================================================
--- SECTION 2: EXECUTE DEPLOYMENT SCRIPTS FROM GIT
+-- SECTION 3: EXECUTE DEPLOYMENT SCRIPTS FROM GIT
 -- ============================================================================
-SELECT 'Step 1: Setting up role and permissions...' AS status;
+-- Step 1: Role setup (ACCOUNTADMIN)
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/01_setup_role_permissions.sql;
 
-SELECT 'Step 2: Creating schemas and warehouse...' AS status;
+-- Step 2: Infrastructure (SYSADMIN creates, grants to app role)
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/02_create_schema_warehouse.sql;
 
-SELECT 'Step 3: Creating tables...' AS status;
+-- Step 3-7: Application objects (app role owns)
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/03_create_tables.sql;
-
-SELECT 'Step 4: Loading sample data...' AS status;
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/04_load_data.sql;
-
-SELECT 'Step 5: Creating semantic view...' AS status;
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/05_create_semantic_view.sql;
-
-SELECT 'Step 6: Creating Cortex Agent...' AS status;
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/06_create_agent.sql;
-
-SELECT 'Step 7: Setting up PAT authentication...' AS status;
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/07_setup_authentication.sql;
 
 -- ============================================================================
 -- VERIFICATION
 -- ============================================================================
-SELECT 'Deployment Complete!' AS status,
-       'SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK' AS schema_created,
-       'SFE_CORTEX_AGENT_SLACK_WH' AS warehouse_created,
-       'medical_assistant' AS agent_created,
-       '2026-02-22' AS expires;
-
 SHOW AGENTS IN SCHEMA SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK;
 
+-- Sample query to verify data
 SELECT department, COUNT(*) AS procedure_count, ROUND(SUM(cost_usd), 2) AS total_cost
 FROM SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.procedures
 GROUP BY department

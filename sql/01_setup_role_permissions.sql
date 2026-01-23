@@ -1,35 +1,23 @@
 /*******************************************************************************
- * Step 1: Role and Permissions Setup
+ * Step 1: Role Setup (ACCOUNTADMIN)
  * PROJECT: Cortex Agent Slack Integration
  * EXPIRES: 2026-02-22
+ *
+ * ACCOUNTADMIN only creates role and grants account-level privileges.
+ * Infrastructure is owned by SYSADMIN.
  ******************************************************************************/
 
 USE ROLE ACCOUNTADMIN;
 
--- Create project role with proper hierarchy
+-- Create project role with proper hierarchy (reports to SYSADMIN)
 CREATE ROLE IF NOT EXISTS cortex_agent_slack_role
     COMMENT = 'DEMO: Cortex Agent Slack Integration (Expires: 2026-02-22)';
 GRANT ROLE cortex_agent_slack_role TO ROLE SYSADMIN;
 
--- Grant account-level privileges
-GRANT CREATE WAREHOUSE ON ACCOUNT TO ROLE cortex_agent_slack_role;
-
--- Grant Cortex database roles (both required for agent creation and usage)
+-- Grant Cortex database roles (required for agent creation and usage)
 GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE cortex_agent_slack_role;
 GRANT DATABASE ROLE SNOWFLAKE.CORTEX_AGENT_USER TO ROLE cortex_agent_slack_role;
 
--- Grant privileges on shared demo database
-GRANT USAGE ON DATABASE SNOWFLAKE_EXAMPLE TO ROLE cortex_agent_slack_role;
-GRANT CREATE SCHEMA ON DATABASE SNOWFLAKE_EXAMPLE TO ROLE cortex_agent_slack_role;
-
--- Pre-create shared semantic models schema and grant privileges (if not exists)
-CREATE SCHEMA IF NOT EXISTS SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS
-    COMMENT = 'DEMO: Shared semantic views for Cortex Analyst agents';
-GRANT USAGE ON SCHEMA SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS TO ROLE cortex_agent_slack_role;
-GRANT CREATE SEMANTIC VIEW ON SCHEMA SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS TO ROLE cortex_agent_slack_role;
-
--- Assign role to current user
+-- Assign role to current user for runtime usage
 SET current_user = (SELECT CURRENT_USER());
 GRANT ROLE cortex_agent_slack_role TO USER IDENTIFIER($current_user);
-
-SELECT 'Role and permissions configured' AS status;

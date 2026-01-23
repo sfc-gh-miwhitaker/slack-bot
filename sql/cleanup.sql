@@ -4,24 +4,38 @@
  * EXPIRES: 2026-02-22
  *
  * Run this script to remove all demo objects.
+ * Uses SYSADMIN for infrastructure, ACCOUNTADMIN for role cleanup.
  ******************************************************************************/
 
-USE ROLE ACCOUNTADMIN;
+-- ============================================================================
+-- SYSADMIN: Remove infrastructure it owns
+-- ============================================================================
+USE ROLE SYSADMIN;
 
--- Remove project-specific objects
+-- Remove warehouse (owned by SYSADMIN)
 DROP WAREHOUSE IF EXISTS SFE_CORTEX_AGENT_SLACK_WH;
+
+-- Remove application objects (owned by app role, but SYSADMIN can drop)
 DROP AGENT IF EXISTS SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.medical_assistant;
 DROP SEMANTIC VIEW IF EXISTS SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS.SV_CORTEX_AGENT_SLACK_MEDICAL;
-DROP SCHEMA IF EXISTS SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK CASCADE;
-DROP ROLE IF EXISTS cortex_agent_slack_role;
 
--- Remove Git repository (optional - may be shared)
+-- Remove project schema with cascade (owned by SYSADMIN)
+DROP SCHEMA IF EXISTS SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK CASCADE;
+
+-- Remove Git repository (owned by SYSADMIN)
 DROP GIT REPOSITORY IF EXISTS SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO;
 
+-- ============================================================================
+-- ACCOUNTADMIN: Remove role it created
+-- ============================================================================
+USE ROLE ACCOUNTADMIN;
+
+DROP ROLE IF EXISTS cortex_agent_slack_role;
+
+-- ============================================================================
 -- PROTECTED (do not drop - shared infrastructure):
+-- ============================================================================
 -- - SNOWFLAKE_EXAMPLE database
 -- - SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS schema
 -- - SNOWFLAKE_EXAMPLE.GIT_REPOS schema
 -- - SFE_GIT_API_INTEGRATION (shared across demos)
-
-SELECT 'Cleanup Complete!' AS status;

@@ -47,5 +47,3 @@ CREATE OR REPLACE TABLE SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.diagnoses (
     treating_physician VARCHAR(100)
 )
 COMMENT = 'DEMO: Patient diagnoses (Expires: 2026-02-22)';
-
-SELECT 'Tables created' AS status;

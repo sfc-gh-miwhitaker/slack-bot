@@ -48,5 +48,3 @@ $$;
 
 -- Grant USAGE on the agent
 GRANT USAGE ON AGENT SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.medical_assistant TO ROLE cortex_agent_slack_role;
-
-SELECT 'Cortex Agent created' AS status;

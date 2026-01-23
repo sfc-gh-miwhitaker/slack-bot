@@ -16,6 +16,3 @@ CREATE OR REPLACE AUTHENTICATION POLICY SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.pat
 -- Apply to current user
 SET current_user = (SELECT CURRENT_USER());
 ALTER USER IDENTIFIER($current_user) SET AUTHENTICATION POLICY SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.pat_auth_policy;
-
-SELECT 'PAT authentication configured' AS status;
-SELECT 'Next: Create a PAT in Snowsight > User menu > Profile > Programmatic access tokens' AS instruction;

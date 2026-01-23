@@ -14,57 +14,105 @@
 
 ---
 
-## Minimal Cortex Agent Integration
+## First Time Here?
 
-If you just want the core Cortex Agent + Slack integration without charts or streaming:
+Run these in order:
 
-```bash
-pip install slack-bolt requests python-dotenv
-export SLACK_APP_TOKEN=xapp-...
-export SLACK_BOT_TOKEN=xoxb-...
-export PAT=your_programmatic_access_token
-export AGENT_ENDPOINT=https://org-account.snowflakecomputing.com/api/v2/databases/SNOWFLAKE_EXAMPLE/schemas/CORTEX_AGENT_SLACK/agents/medical_assistant:run
-python bot/example_cortex_minimal.py
-```
+| Step | Action | Location |
+|------|--------|----------|
+| 1 | Run `deploy_all.sql` (click Run All) | Snowsight |
+| 2 | Run `sql/07_setup_authentication.sql` **line-by-line**, copy PAT | Snowsight |
+| 3 | Create Slack app, copy tokens | [api.slack.com/apps](https://api.slack.com/apps) |
+| 4 | Copy `.env.example` → `.env`, fill in values | Local |
+| 5 | `pip install -r bot/requirements.txt && python bot/app.py` | Terminal |
 
-See [`bot/example_cortex_minimal.py`](bot/example_cortex_minimal.py) - ~60 lines showing the essential Cortex Agent API integration.
+**Prerequisites:** Snowflake account with Cortex access, Slack workspace admin access, Python 3.10+
 
 ---
 
-## Quick Start (Full Demo)
+## What Gets Created
 
-**Prerequisites:** Snowflake account with Cortex access, Slack workspace with admin access
+| Object | Name | Owner |
+|--------|------|-------|
+| Database | `SNOWFLAKE_EXAMPLE` | SYSADMIN |
+| Schema | `SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK` | SYSADMIN |
+| Schema | `SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS` | SYSADMIN |
+| Warehouse | `SFE_CORTEX_AGENT_SLACK_WH` | SYSADMIN |
+| Role | `cortex_agent_slack_role` | ACCOUNTADMIN |
+| Tables | `patients`, `procedures`, `diagnoses` | App Role |
+| Semantic View | `SV_CORTEX_AGENT_SLACK_MEDICAL` | App Role |
+| Agent | `medical_assistant` | App Role |
 
-### 1. Deploy Snowflake Objects (2 min)
+Sample data: 500 patients, 2,000 procedures, 1,500 diagnoses
 
-```sql
--- Run in Snowsight with ACCOUNTADMIN role
--- Copy contents of deploy_all.sql (at root) and click "Run All"
-```
+---
 
-This creates:
-- 500 synthetic patient records
-- 2,000 medical procedures with costs
-- 1,500 diagnoses with ICD codes
-- Semantic view for natural language queries
-- Cortex Agent configured for medical analytics
+## Detailed Steps
 
-### 2. Create Slack App (5 min)
+### Step 1: Deploy Snowflake Objects
 
-1. Go to [api.slack.com/apps](https://api.slack.com/apps) and create new app
-2. Enable **Socket Mode** (Settings > Socket Mode > Enable)
-3. Add **Bot Token Scopes**: `app_mentions:read`, `chat:write`, `files:write`, `im:history`, `im:read`, `im:write`
-4. Enable **Events**: `app_mention`, `message.im`
-5. Install to workspace and copy tokens
+1. Open [Snowsight](https://app.snowflake.com)
+2. Open `deploy_all.sql` from repository root
+3. Copy entire contents to a new SQL worksheet
+4. Click **Run All**
 
-### 3. Configure Environment
+Verify: You should see the agent listed and a sample query result.
+
+### Step 2: Setup PAT Authentication
+
+⚠️ **Run line-by-line** - You must copy the PAT token when displayed!
+
+1. Open `sql/07_setup_authentication.sql`
+2. Execute each statement individually (do NOT use Run All)
+3. Follow the in-file instructions to create PAT in Snowsight UI
+4. **Copy the PAT immediately** - it's shown only once
+5. Save PAT for Step 4
+
+### Step 3: Create Slack App
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps)
+2. Click **Create New App** → **From scratch**
+3. Name: `Medical Analytics Bot`, select your workspace
+
+**Socket Mode:**
+- Settings → Socket Mode → Enable
+- Generate app-level token with `connections:write` scope
+- Copy the `xapp-...` token
+
+**Bot Permissions** (OAuth & Permissions → Scopes):
+- `app_mentions:read`
+- `chat:write`
+- `files:write`
+- `im:history`
+- `im:read`
+- `im:write`
+
+**Event Subscriptions:**
+- Enable Events
+- Subscribe to: `app_mention`, `message.im`
+
+**Install:**
+- Install to Workspace
+- Copy the `xoxb-...` Bot Token
+
+### Step 4: Configure Environment
 
 ```bash
 cp .env.example .env
-# Edit .env with your values
 ```
 
-### 4. Run
+Edit `.env` with your values:
+
+| Variable | Where to Get It |
+|----------|-----------------|
+| `ACCOUNT` | Your Snowflake account identifier (e.g., `orgname-accountname`) |
+| `HOST` | `{ACCOUNT}.snowflakecomputing.com` |
+| `DEMO_USER` | Your Snowflake username |
+| `PAT` | From Step 2 (the token you copied) |
+| `SLACK_APP_TOKEN` | From Step 3 (`xapp-...`) |
+| `SLACK_BOT_TOKEN` | From Step 3 (`xoxb-...`) |
+
+### Step 5: Run
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
@@ -72,22 +120,22 @@ pip install -r bot/requirements.txt
 python bot/app.py
 ```
 
-## Features
+You should see: `⚡️ Bolt app is running!`
 
-- **Natural Language Analytics** - Ask questions about medical data in plain English
-- **Auto-Visualization** - Automatic chart generation for data responses
-- **Verified Query Badges** - Visual indicator when using pre-verified SQL
-- **Real-time Thinking Display** - See agent reasoning as it works
+---
 
 ## Example Queries
 
-Ask the bot:
+Message the bot in Slack:
+
 - "How many procedures by department?"
 - "What is the total revenue by department?"
 - "Show me patients by insurance provider"
 - "What are the most common diagnoses?"
 - "Breakdown of diagnosis severity"
 - "Average procedure cost by department"
+
+---
 
 ## Architecture
 
@@ -104,38 +152,35 @@ flowchart LR
 
 See [`diagrams/`](diagrams/) for detailed architecture diagrams.
 
-## Configuration
+---
 
-### Environment Variables
+## Understanding the Core
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `ACCOUNT` | Snowflake account identifier | `orgname-accountname` |
-| `HOST` | Snowflake host | `orgname-accountname.snowflakecomputing.com` |
-| `DEMO_USER` | Snowflake username | `your_username` |
-| `PAT` | Programmatic Access Token | `pat_...` |
-| `AGENT_ENDPOINT` | Cortex Agent API endpoint | See below |
-| `SLACK_APP_TOKEN` | Slack app-level token | `xapp-...` |
-| `SLACK_BOT_TOKEN` | Slack bot token | `xoxb-...` |
+Want to see the minimal integration without charts or streaming?
 
-### Agent Endpoint Format
+See [`bot/example_cortex_minimal.py`](bot/example_cortex_minimal.py) - ~60 lines showing the essential Cortex Agent API call:
 
-```
-https://{org}-{account}.snowflakecomputing.com/api/v2/databases/SNOWFLAKE_EXAMPLE/schemas/CORTEX_AGENT_SLACK/agents/medical_assistant:run
+```bash
+pip install slack-bolt requests python-dotenv
+python bot/example_cortex_minimal.py
 ```
 
-### Creating a Programmatic Access Token (PAT)
+This requires the same environment variables from Steps 2-4.
 
-1. Go to Snowsight > User menu > Profile
-2. Select "Programmatic access tokens"
-3. Create new token with role: `cortex_agent_slack_role`
-4. Copy token to `.env` file
+---
 
 ## Cleanup
 
+Remove all demo objects:
+
 ```sql
--- Run sql/cleanup.sql to remove all demo objects
+-- Run in Snowsight
+-- Open sql/99_cleanup.sql and click Run All
 ```
+
+**Protected (not removed):** `SNOWFLAKE_EXAMPLE` database, `SEMANTIC_MODELS` schema, `GIT_REPOS` schema, `SFE_GIT_API_INTEGRATION`
+
+---
 
 ## License
 

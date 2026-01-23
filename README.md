@@ -106,7 +106,6 @@ Edit `.env` with your values:
 | Variable | Where to Get It |
 |----------|-----------------|
 | `ACCOUNT` | Your Snowflake account identifier (e.g., `orgname-accountname`) |
-| `HOST` | `{ACCOUNT}.snowflakecomputing.com` |
 | `DEMO_USER` | Your Snowflake username |
 | `PAT` | From Step 2 (the token you copied) |
 | `SLACK_APP_TOKEN` | From Step 3 (`xapp-...`) |

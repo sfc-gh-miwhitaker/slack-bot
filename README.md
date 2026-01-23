@@ -4,28 +4,30 @@
 
 # Cortex Agent Slack Integration
 
-> DEMONSTRATION PROJECT - EXPIRES: 2026-02-22  
-> This demo uses Snowflake features current as of January 2026.  
+> DEMONSTRATION PROJECT - EXPIRES: 2026-02-22
+> This demo uses Snowflake features current as of January 2026.
 > After expiration, this repository will be archived and made private.
 
-**Author:** SE Community  
-**Purpose:** Reference implementation for integrating Snowflake Cortex Agents with Slack  
+**Author:** SE Community
+**Purpose:** Reference implementation for integrating Snowflake Cortex Agents with Slack
 **Created:** 2026-01-23 | **Expires:** 2026-02-22 (30 days) | **Status:** ACTIVE
 
 ---
 
-## Just Want the Slack Bot?
+## Minimal Cortex Agent Integration
 
-If you just want the basic Slack bot code without Cortex Agent integration:
+If you just want the core Cortex Agent + Slack integration without charts or streaming:
 
 ```bash
-pip install slack-bolt python-dotenv
+pip install slack-bolt requests python-dotenv
 export SLACK_APP_TOKEN=xapp-...
 export SLACK_BOT_TOKEN=xoxb-...
-python bot/example_minimal.py
+export PAT=your_programmatic_access_token
+export AGENT_ENDPOINT=https://org-account.snowflakecomputing.com/api/v2/databases/snowflake_intelligence/schemas/agents/agents/medical_assistant:run
+python bot/example_cortex_minimal.py
 ```
 
-See [`bot/example_minimal.py`](bot/example_minimal.py) - a 40-line standalone Slack bot you can copy and customize.
+See [`bot/example_cortex_minimal.py`](bot/example_cortex_minimal.py) - ~60 lines showing the essential Cortex Agent API integration.
 
 ---
 

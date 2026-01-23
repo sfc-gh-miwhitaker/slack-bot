@@ -113,18 +113,6 @@ EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/bran
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/06_create_agent.sql;
 
 -- ============================================================================
--- VERIFICATION
--- ============================================================================
-SHOW AGENTS IN SCHEMA SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK;
-
--- Sample query to verify data
-SELECT department, COUNT(*) AS procedure_count, ROUND(SUM(cost_usd), 2) AS total_cost
-FROM SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.procedures
-GROUP BY department
-ORDER BY procedure_count DESC
-LIMIT 5;
-
--- ============================================================================
 -- NEXT STEP: PAT Authentication (Manual)
 -- ============================================================================
 -- Open sql/07_setup_authentication.sql and run LINE-BY-LINE

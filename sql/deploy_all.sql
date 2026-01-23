@@ -51,24 +51,31 @@ SELECT 'SAFE TO RUN: All objects will be created in SNOWFLAKE_EXAMPLE database o
 -- ============================================================================
 USE ROLE ACCOUNTADMIN;
 
+-- Create shared demo database (if not exists)
+CREATE DATABASE IF NOT EXISTS SNOWFLAKE_EXAMPLE
+    COMMENT = 'DEMO: Shared demo database for SE examples';
+
+-- Create project role
 CREATE ROLE IF NOT EXISTS cortex_agent_slack_role
     COMMENT = 'DEMO: Cortex Agent Slack Integration (Expires: 2026-02-22)';
 
-GRANT CREATE DATABASE ON ACCOUNT TO ROLE cortex_agent_slack_role;
+-- Grant account-level privileges
 GRANT CREATE WAREHOUSE ON ACCOUNT TO ROLE cortex_agent_slack_role;
 GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE cortex_agent_slack_role;
 
+-- Grant privileges on shared demo database
+GRANT USAGE ON DATABASE SNOWFLAKE_EXAMPLE TO ROLE cortex_agent_slack_role;
+GRANT CREATE SCHEMA ON DATABASE SNOWFLAKE_EXAMPLE TO ROLE cortex_agent_slack_role;
+
+-- Assign role to current user
 SET current_user = (SELECT CURRENT_USER());
 GRANT ROLE cortex_agent_slack_role TO USER IDENTIFIER($current_user);
 
 USE ROLE cortex_agent_slack_role;
 
 -- ============================================================================
--- SECTION 2: DATABASE, SCHEMA, AND WAREHOUSE
+-- SECTION 2: SCHEMA AND WAREHOUSE
 -- ============================================================================
-CREATE DATABASE IF NOT EXISTS SNOWFLAKE_EXAMPLE
-    COMMENT = 'DEMO: Shared demo database for SE examples';
-
 CREATE SCHEMA IF NOT EXISTS SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK
     COMMENT = 'DEMO: Cortex Agent Slack Integration (Expires: 2026-02-22)';
 

@@ -101,7 +101,6 @@ EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/bran
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/04_load_data.sql;
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/05_create_semantic_view.sql;
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/06_create_agent.sql;
-EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/07_setup_authentication.sql;
 
 -- ============================================================================
 -- VERIFICATION
@@ -114,3 +113,12 @@ FROM SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.procedures
 GROUP BY department
 ORDER BY procedure_count DESC
 LIMIT 5;
+
+-- ============================================================================
+-- NEXT STEP: PAT Authentication (Manual)
+-- ============================================================================
+-- Open sql/07_setup_authentication.sql and run LINE-BY-LINE
+-- You must copy the PAT token when it's displayed (shown only once!)
+--
+-- Or run from Git stage:
+-- LS @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/07_setup_authentication.sql;

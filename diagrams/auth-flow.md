@@ -91,7 +91,7 @@ flowchart TD
         P1[CREATE DATABASE ON ACCOUNT]
         P2[CREATE WAREHOUSE ON ACCOUNT]
         P3[SNOWFLAKE.CORTEX_USER database role]
-        P4[USAGE ON snowflake_intelligence]
+        P4[USAGE ON AGENT medical_assistant]
         P5[USAGE ON AGENT medical_assistant]
         P6[SELECT ON semantic view]
     end

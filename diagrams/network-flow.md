@@ -52,7 +52,7 @@ flowchart TB
 | Property | Value |
 |----------|-------|
 | Protocol | HTTPS |
-| Endpoint | `https://{org}-{account}.snowflakecomputing.com/api/v2/databases/snowflake_intelligence/schemas/agents/agents/medical_assistant:run` |
+| Endpoint | `https://{org}-{account}.snowflakecomputing.com/api/v2/databases/SNOWFLAKE_EXAMPLE/schemas/CORTEX_AGENT_SLACK/agents/medical_assistant:run` |
 | Authentication | Programmatic Access Token (PAT) |
 | Header | `X-Snowflake-Authorization-Token-Type: PROGRAMMATIC_ACCESS_TOKEN` |
 | Port | 443 |

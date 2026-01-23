@@ -14,7 +14,7 @@ Run:
     export SLACK_APP_TOKEN=xapp-...
     export SLACK_BOT_TOKEN=xoxb-...
     export PAT=your_programmatic_access_token
-    export AGENT_ENDPOINT=https://org-account.snowflakecomputing.com/api/v2/databases/snowflake_intelligence/schemas/agents/agents/medical_assistant:run
+    export AGENT_ENDPOINT=https://org-account.snowflakecomputing.com/api/v2/databases/SNOWFLAKE_EXAMPLE/schemas/CORTEX_AGENT_SLACK/agents/medical_assistant:run
     python example_cortex_minimal.py
 """
 

@@ -5,7 +5,7 @@
  * CREATED: 2026-01-23
  * EXPIRES: 2026-02-22
  * PURPOSE: Reference implementation for integrating Snowflake Cortex Agents with Slack
- * 
+ *
  * DEPLOYMENT INSTRUCTIONS:
  * 1. Open Snowsight (https://app.snowflake.com)
  * 2. Copy this ENTIRE script
@@ -16,12 +16,12 @@
 -- ============================================================================
 -- EXPIRATION CHECK
 -- ============================================================================
-SELECT 
+SELECT
     '2026-02-22'::DATE AS expiration_date,
     CURRENT_DATE() AS current_date,
     DATEDIFF('day', CURRENT_DATE(), '2026-02-22'::DATE) AS days_remaining,
-    CASE 
-        WHEN DATEDIFF('day', CURRENT_DATE(), '2026-02-22'::DATE) < 0 
+    CASE
+        WHEN DATEDIFF('day', CURRENT_DATE(), '2026-02-22'::DATE) < 0
         THEN 'EXPIRED - Do not deploy. Fork repository and update expiration date.'
         WHEN DATEDIFF('day', CURRENT_DATE(), '2026-02-22'::DATE) <= 7
         THEN 'EXPIRING SOON - ' || DATEDIFF('day', CURRENT_DATE(), '2026-02-22'::DATE) || ' days remaining'
@@ -39,7 +39,7 @@ SELECT
 -- Additional objects created:
 --   - Warehouse: SFE_CORTEX_AGENT_SLACK_WH (isolated compute)
 --   - Role:      cortex_agent_slack_role (project-specific permissions)
---   - Agent:     snowflake_intelligence.agents.medical_assistant
+--   - Agent:     SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.medical_assistant
 --
 -- Your existing databases, schemas, and data are NOT modified.
 -- ============================================================================
@@ -145,7 +145,7 @@ blood_types AS (
     SELECT column1 AS bt FROM VALUES ('A+'),('A-'),('B+'),('B-'),('AB+'),('AB-'),('O+'),('O-')
 ),
 insurers AS (
-    SELECT column1 AS ins FROM VALUES 
+    SELECT column1 AS ins FROM VALUES
     ('Blue Cross'),('Aetna'),('UnitedHealth'),('Cigna'),('Humana'),('Kaiser'),('Medicare'),('Medicaid')
 ),
 physicians AS (
@@ -153,7 +153,7 @@ physicians AS (
     ('Dr. Sarah Chen'),('Dr. Michael Roberts'),('Dr. Emily Watson'),('Dr. James Park'),
     ('Dr. Lisa Thompson'),('Dr. Robert Kim'),('Dr. Amanda Garcia'),('Dr. David Lee')
 )
-SELECT 
+SELECT
     ROW_NUMBER() OVER (ORDER BY RANDOM()) AS patient_id,
     f.name AS first_name,
     l.name AS last_name,
@@ -204,7 +204,7 @@ physicians AS (
     ('Dr. Sarah Chen'),('Dr. Michael Roberts'),('Dr. Emily Watson'),('Dr. James Park'),
     ('Dr. Lisa Thompson'),('Dr. Robert Kim'),('Dr. Amanda Garcia'),('Dr. David Lee')
 )
-SELECT 
+SELECT
     ROW_NUMBER() OVER (ORDER BY RANDOM()) AS procedure_id,
     p.patient_id,
     DATEADD('day', -UNIFORM(1, 365, RANDOM()), CURRENT_DATE()) AS procedure_date,
@@ -213,7 +213,7 @@ SELECT
     (SELECT doc FROM physicians ORDER BY RANDOM() LIMIT 1) AS physician,
     pt.base_duration + UNIFORM(-5, 15, RANDOM()) AS duration_minutes,
     pt.base_cost * (1 + (UNIFORM(-20, 30, RANDOM()) / 100.0)) AS cost_usd,
-    CASE UNIFORM(1, 10, RANDOM()) 
+    CASE UNIFORM(1, 10, RANDOM())
         WHEN 1 THEN 'Scheduled'
         WHEN 2 THEN 'In Progress'
         ELSE 'Completed'
@@ -253,7 +253,7 @@ physicians AS (
     ('Dr. Sarah Chen'),('Dr. Michael Roberts'),('Dr. Emily Watson'),('Dr. James Park'),
     ('Dr. Lisa Thompson'),('Dr. Robert Kim'),('Dr. Amanda Garcia'),('Dr. David Lee')
 )
-SELECT 
+SELECT
     ROW_NUMBER() OVER (ORDER BY RANDOM()) AS diagnosis_id,
     p.patient_id,
     DATEADD('day', -UNIFORM(1, 730, RANDOM()), CURRENT_DATE()) AS diagnosis_date,
@@ -267,7 +267,7 @@ WHERE RANDOM() < 0.08
 ORDER BY RANDOM()
 LIMIT 1500;
 
-SELECT 
+SELECT
     (SELECT COUNT(*) FROM SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.patients) AS patients,
     (SELECT COUNT(*) FROM SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.procedures) AS procedures,
     (SELECT COUNT(*) FROM SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.diagnoses) AS diagnoses;
@@ -384,23 +384,15 @@ WITH SEMANTICS (
     ]
 );
 
-GRANT SELECT ON SEMANTIC VIEW SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS.SV_CORTEX_AGENT_SLACK_MEDICAL 
+GRANT SELECT ON SEMANTIC VIEW SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS.SV_CORTEX_AGENT_SLACK_MEDICAL
     TO ROLE cortex_agent_slack_role;
 
 -- ============================================================================
 -- SECTION 5: CORTEX AGENT
 -- ============================================================================
-CREATE DATABASE IF NOT EXISTS snowflake_intelligence
-    COMMENT = 'Database for Snowflake Intelligence agents';
-    
-CREATE SCHEMA IF NOT EXISTS snowflake_intelligence.agents
-    COMMENT = 'Schema for Cortex Agents';
+GRANT CREATE AGENT ON SCHEMA SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK TO ROLE cortex_agent_slack_role;
 
-GRANT USAGE ON DATABASE snowflake_intelligence TO ROLE cortex_agent_slack_role;
-GRANT USAGE ON SCHEMA snowflake_intelligence.agents TO ROLE cortex_agent_slack_role;
-GRANT CREATE AGENT ON SCHEMA snowflake_intelligence.agents TO ROLE cortex_agent_slack_role;
-
-CREATE OR REPLACE AGENT snowflake_intelligence.agents.medical_assistant
+CREATE OR REPLACE AGENT SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.medical_assistant
     COMMENT = 'DEMO: Medical records analytics assistant (Expires: 2026-02-22)'
 FROM SPECIFICATION $$
 {
@@ -433,7 +425,7 @@ FROM SPECIFICATION $$
 }
 $$;
 
-GRANT USAGE ON AGENT snowflake_intelligence.agents.medical_assistant TO ROLE cortex_agent_slack_role;
+GRANT USAGE ON AGENT SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.medical_assistant TO ROLE cortex_agent_slack_role;
 
 -- ============================================================================
 -- SECTION 6: PAT AUTHENTICATION
@@ -453,7 +445,7 @@ SELECT 'Deployment Complete!' AS status,
        'medical_assistant' AS agent_created,
        '2026-02-22' AS expires;
 
-SHOW AGENTS IN SCHEMA snowflake_intelligence.agents;
+SHOW AGENTS IN SCHEMA SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK;
 
 SELECT department, COUNT(*) AS procedure_count, ROUND(SUM(cost_usd), 2) AS total_cost
 FROM SNOWFLAKE_EXAMPLE.CORTEX_AGENT_SLACK.procedures

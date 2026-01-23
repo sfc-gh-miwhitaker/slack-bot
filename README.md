@@ -23,7 +23,7 @@ pip install slack-bolt requests python-dotenv
 export SLACK_APP_TOKEN=xapp-...
 export SLACK_BOT_TOKEN=xoxb-...
 export PAT=your_programmatic_access_token
-export AGENT_ENDPOINT=https://org-account.snowflakecomputing.com/api/v2/databases/snowflake_intelligence/schemas/agents/agents/medical_assistant:run
+export AGENT_ENDPOINT=https://org-account.snowflakecomputing.com/api/v2/databases/SNOWFLAKE_EXAMPLE/schemas/CORTEX_AGENT_SLACK/agents/medical_assistant:run
 python bot/example_cortex_minimal.py
 ```
 
@@ -91,16 +91,18 @@ Ask the bot:
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    U[User] -->|Slack| B[Bot]
+    B -->|REST API| A[Cortex Agent]
+    A --> CA[Cortex Analyst]
+    CA --> SV[Semantic View]
+    SV --> P[(Patients)]
+    SV --> PR[(Procedures)]
+    SV --> D[(Diagnoses)]
 ```
-User (Slack) --> Slack Bot --> Cortex Agent API
-                                    |
-                            Cortex Analyst
-                            (Semantic View)
-                                    |
-                    +---------------+---------------+
-                    |               |               |
-                Patients      Procedures      Diagnoses
-```
+
+See [`diagrams/`](diagrams/) for detailed architecture diagrams.
 
 ## Configuration
 
@@ -119,7 +121,7 @@ User (Slack) --> Slack Bot --> Cortex Agent API
 ### Agent Endpoint Format
 
 ```
-https://{org}-{account}.snowflakecomputing.com/api/v2/databases/snowflake_intelligence/schemas/agents/agents/medical_assistant:run
+https://{org}-{account}.snowflakecomputing.com/api/v2/databases/SNOWFLAKE_EXAMPLE/schemas/CORTEX_AGENT_SLACK/agents/medical_assistant:run
 ```
 
 ### Creating a Programmatic Access Token (PAT)

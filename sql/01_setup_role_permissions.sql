@@ -22,6 +22,12 @@ GRANT DATABASE ROLE SNOWFLAKE.CORTEX_AGENT_USER TO ROLE cortex_agent_slack_role;
 GRANT USAGE ON DATABASE SNOWFLAKE_EXAMPLE TO ROLE cortex_agent_slack_role;
 GRANT CREATE SCHEMA ON DATABASE SNOWFLAKE_EXAMPLE TO ROLE cortex_agent_slack_role;
 
+-- Pre-create shared semantic models schema and grant privileges (if not exists)
+CREATE SCHEMA IF NOT EXISTS SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS
+    COMMENT = 'DEMO: Shared semantic views for Cortex Analyst agents';
+GRANT USAGE ON SCHEMA SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS TO ROLE cortex_agent_slack_role;
+GRANT CREATE SEMANTIC VIEW ON SCHEMA SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS TO ROLE cortex_agent_slack_role;
+
 -- Assign role to current user
 SET current_user = (SELECT CURRENT_USER());
 GRANT ROLE cortex_agent_slack_role TO USER IDENTIFIER($current_user);

@@ -21,7 +21,7 @@ Run these in order:
 | Step | Action | Location |
 |------|--------|----------|
 | 1 | Run `deploy_all.sql` (click Run All) | Snowsight |
-| 2 | Run `sql/07_setup_authentication.sql` **line-by-line**, copy PAT | Snowsight |
+| 2 | Create PAT (Profile → Programmatic access tokens) | Snowsight |
 | 3 | Create Slack app, copy tokens | [api.slack.com/apps](https://api.slack.com/apps) |
 | 4 | Copy `.env.example` → `.env`, fill in values | Local |
 | 5 | `pip install -r bot/requirements.txt && python bot/app.py` | Terminal |
@@ -56,17 +56,13 @@ Sample data: 500 patients, 2,000 procedures, 1,500 diagnoses
 3. Copy entire contents to a new SQL worksheet
 4. Click **Run All**
 
-Verify: You should see the agent listed and a sample query result.
+### Step 2: Create PAT
 
-### Step 2: Setup PAT Authentication
-
-⚠️ **Run line-by-line** - You must copy the PAT token when displayed!
-
-1. Open `sql/07_setup_authentication.sql`
-2. Execute each statement individually (do NOT use Run All)
-3. Follow the in-file instructions to create PAT in Snowsight UI
-4. **Copy the PAT immediately** - it's shown only once
-5. Save PAT for Step 4
+1. In Snowsight, click your username (bottom-left) → **Profile**
+2. Scroll to **Programmatic access tokens** → **+ Token**
+3. Role: `cortex_agent_slack_role`
+4. Warehouse: `SFE_CORTEX_AGENT_SLACK_WH`
+5. **Copy the token immediately** - shown only once!
 
 ### Step 3: Create Slack App
 

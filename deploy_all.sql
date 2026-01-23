@@ -106,17 +106,18 @@ EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/bran
 -- Step 2: Infrastructure (SYSADMIN creates, grants to app role)
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/02_create_schema_warehouse.sql;
 
--- Step 3-7: Application objects (app role owns)
+-- Step 3-6: Application objects (app role owns)
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/03_create_tables.sql;
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/04_load_data.sql;
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/05_create_semantic_view.sql;
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/06_create_agent.sql;
 
 -- ============================================================================
--- NEXT STEP: PAT Authentication (Manual)
+-- NEXT STEP: Create PAT in Snowsight
 -- ============================================================================
--- Open sql/07_setup_authentication.sql and run LINE-BY-LINE
--- You must copy the PAT token when it's displayed (shown only once!)
---
--- Or run from Git stage:
--- LS @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/07_setup_authentication.sql;
+-- 1. Click your username (bottom-left) → Profile
+-- 2. Scroll to "Programmatic access tokens" → "+ Token"
+-- 3. Role: cortex_agent_slack_role
+-- 4. Warehouse: SFE_CORTEX_AGENT_SLACK_WH
+-- 5. Copy the token immediately (shown only once!)
+-- 6. Add to .env file as PAT=<your-token>

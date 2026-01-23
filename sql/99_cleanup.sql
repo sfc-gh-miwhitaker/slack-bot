@@ -4,17 +4,7 @@
  * EXPIRES: 2026-02-22
  *
  * Run this script to remove all demo objects.
- * Uses ACCOUNTADMIN first (to unset policies), then SYSADMIN for infrastructure.
  ******************************************************************************/
-
--- ============================================================================
--- ACCOUNTADMIN: Unset authentication policy from user (required before drop)
--- ============================================================================
-USE ROLE ACCOUNTADMIN;
-
--- Must unset policy before dropping schema that contains it
-SET current_user = (SELECT CURRENT_USER());
-ALTER USER IDENTIFIER($current_user) UNSET AUTHENTICATION POLICY;
 
 -- ============================================================================
 -- SYSADMIN: Remove infrastructure it owns

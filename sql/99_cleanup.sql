@@ -7,6 +7,13 @@
  ******************************************************************************/
 
 -- ============================================================================
+-- ACCOUNTADMIN: Clear any auth policy from user (legacy cleanup)
+-- ============================================================================
+USE ROLE ACCOUNTADMIN;
+SET current_user = (SELECT CURRENT_USER());
+ALTER USER IDENTIFIER($current_user) UNSET AUTHENTICATION POLICY;
+
+-- ============================================================================
 -- SYSADMIN: Remove infrastructure it owns
 -- ============================================================================
 USE ROLE SYSADMIN;

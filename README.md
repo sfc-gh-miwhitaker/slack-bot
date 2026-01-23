@@ -39,7 +39,7 @@ See [`bot/example_cortex_minimal.py`](bot/example_cortex_minimal.py) - ~60 lines
 
 ```sql
 -- Run in Snowsight with ACCOUNTADMIN role
--- Copy contents of sql/deploy_all.sql and execute
+-- Copy contents of deploy_all.sql (at root) and click "Run All"
 ```
 
 This creates:

@@ -18,6 +18,5 @@ GRANT ROLE cortex_agent_slack_role TO ROLE SYSADMIN;
 GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE cortex_agent_slack_role;
 GRANT DATABASE ROLE SNOWFLAKE.CORTEX_AGENT_USER TO ROLE cortex_agent_slack_role;
 
--- Assign role to current user for runtime usage
-SET current_user = (SELECT CURRENT_USER());
-GRANT ROLE cortex_agent_slack_role TO USER IDENTIFIER($current_user);
+-- NOTE: Role grant to current user is in deploy_all.sql
+-- (session variables not supported in EXECUTE IMMEDIATE FROM)

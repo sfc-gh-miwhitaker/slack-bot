@@ -103,6 +103,10 @@ LS @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/;
 -- Step 1: Role setup (ACCOUNTADMIN)
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/01_setup_role_permissions.sql;
 
+-- Grant role to current user (must be here - session variables not supported in EXECUTE IMMEDIATE FROM)
+SET current_user = (SELECT CURRENT_USER());
+GRANT ROLE cortex_agent_slack_role TO USER IDENTIFIER($current_user);
+
 -- Step 2: Infrastructure (SYSADMIN creates, grants to app role)
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.CORTEX_AGENT_SLACK_REPO/branches/main/sql/02_create_schema_warehouse.sql;
 

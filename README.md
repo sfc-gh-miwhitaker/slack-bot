@@ -67,29 +67,60 @@ Sample data: 500 patients, 2,000 procedures, 1,500 diagnoses
 ### Step 3: Create Slack App
 
 1. Go to [api.slack.com/apps](https://api.slack.com/apps)
-2. Click **Create New App** → **From scratch**
-3. Name: `Medical Analytics Bot`, select your workspace
+2. Click **Create New App** → **From an app manifest**
+3. Select your workspace, then paste this manifest:
 
-**Socket Mode:**
-- Settings → Socket Mode → Enable
-- Generate app-level token with `connections:write` scope
-- Copy the `xapp-...` token
+```json
+{
+    "display_information": {
+        "name": "Medical Analytics Bot"
+    },
+    "features": {
+        "app_home": {
+            "home_tab_enabled": false,
+            "messages_tab_enabled": true,
+            "messages_tab_read_only_enabled": false
+        },
+        "bot_user": {
+            "display_name": "Medical Analytics Bot",
+            "always_online": true
+        }
+    },
+    "oauth_config": {
+        "scopes": {
+            "bot": [
+                "app_mentions:read",
+                "chat:write",
+                "files:write",
+                "im:history",
+                "im:read",
+                "im:write"
+            ]
+        }
+    },
+    "settings": {
+        "event_subscriptions": {
+            "bot_events": [
+                "app_mention",
+                "message.im"
+            ]
+        },
+        "interactivity": {
+            "is_enabled": true
+        },
+        "org_deploy_enabled": false,
+        "socket_mode_enabled": true,
+        "token_rotation_enabled": false
+    }
+}
+```
 
-**Bot Permissions** (OAuth & Permissions → Scopes):
-- `app_mentions:read`
-- `chat:write`
-- `files:write`
-- `im:history`
-- `im:read`
-- `im:write`
-
-**Event Subscriptions:**
-- Enable Events
-- Subscribe to: `app_mention`, `message.im`
-
-**Install:**
-- Install to Workspace
-- Copy the `xoxb-...` Bot Token
+4. Click **Create**
+5. Go to **Basic Information** → **App-Level Tokens** → **Generate Token**
+   - Name: `socket`, Scope: `connections:write`
+   - Copy the **App Token** (`xapp-...`)
+6. Go to **Install App** → **Install to Workspace** → **Allow**
+7. Copy the **Bot Token** (`xoxb-...`) that appears
 
 ### Step 4: Configure Environment
 
@@ -129,6 +160,18 @@ Message the bot in Slack:
 - "What are the most common diagnoses?"
 - "Breakdown of diagnosis severity"
 - "Average procedure cost by department"
+
+### Query with Auto-Generated Chart
+
+Ask a question and get both a text response with insights and an automatically generated visualization:
+
+![Query with chart](assets/demo-query-chart.png)
+
+### Follow-up with Conversation Context
+
+Ask follow-up questions naturally - the bot remembers the conversation context:
+
+![Follow-up with context](assets/demo-followup-context.png)
 
 ---
 

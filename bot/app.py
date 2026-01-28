@@ -7,7 +7,9 @@ import os
 import re
 import json
 import tempfile
-from typing import Optional
+import time
+from typing import Optional, Dict, List
+from collections import defaultdict
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import snowflake.connector
@@ -32,6 +34,44 @@ chart_gen = ChartGenerator()
 
 CORTEX_AGENT: Optional[CortexAgent] = None
 SNOWFLAKE_CONN = None
+
+# Conversation history storage: {conversation_key: [{"role": "user"|"assistant", "content": "..."}]}
+CONVERSATION_HISTORY: Dict[str, List[Dict[str, str]]] = defaultdict(list)
+CONVERSATION_TIMESTAMPS: Dict[str, float] = {}
+MAX_HISTORY_LENGTH = 10  # Keep last N message pairs
+HISTORY_TTL_SECONDS = 3600  # Clear history after 1 hour of inactivity
+
+
+def get_conversation_key(event: dict) -> str:
+    """Get unique conversation key from Slack event (thread_ts or channel)."""
+    thread_ts = event.get('thread_ts')
+    channel = event.get('channel', '')
+
+    # If in a thread, use thread_ts as key
+    if thread_ts:
+        return f"{channel}:{thread_ts}"
+    # For DMs without threads, use channel (each DM channel is unique per user)
+    return channel
+
+
+def get_conversation_history(key: str) -> List[Dict[str, str]]:
+    """Get conversation history, clearing if expired."""
+    # Check if conversation has expired
+    last_time = CONVERSATION_TIMESTAMPS.get(key, 0)
+    if time.time() - last_time > HISTORY_TTL_SECONDS:
+        CONVERSATION_HISTORY[key] = []
+
+    return CONVERSATION_HISTORY[key]
+
+
+def add_to_conversation(key: str, role: str, content: str):
+    """Add a message to conversation history."""
+    CONVERSATION_HISTORY[key].append({"role": role, "content": content})
+    CONVERSATION_TIMESTAMPS[key] = time.time()
+
+    # Trim to max length (keep pairs: user + assistant)
+    if len(CONVERSATION_HISTORY[key]) > MAX_HISTORY_LENGTH * 2:
+        CONVERSATION_HISTORY[key] = CONVERSATION_HISTORY[key][-(MAX_HISTORY_LENGTH * 2):]
 
 
 def get_snowflake_connection():
@@ -204,7 +244,7 @@ def handle_dm(message, say, client):
 
 
 def process_message(event: dict, say, client):
-    """Main message processing with streaming updates."""
+    """Main message processing with streaming updates and conversation context."""
     global CORTEX_AGENT
 
     user_message = event.get('text', '').strip()
@@ -219,6 +259,10 @@ def process_message(event: dict, say, client):
         return
 
     channel = event.get('channel')
+
+    # Get conversation context
+    conversation_key = get_conversation_key(event)
+    history = get_conversation_history(conversation_key)
 
     initial_msg = say(
         text="Processing...",
@@ -247,13 +291,18 @@ def process_message(event: dict, say, client):
                 client.chat_update(
                     channel=channel,
                     ts=thinking_ts,
+                    text=f"Thinking... {status}",
                     blocks=create_thinking_block(status, steps)
                 )
             except Exception as e:
                 print(f"Status update failed: {e}")
 
     try:
-        response = CORTEX_AGENT.chat(user_message, on_status=on_status_update)
+        response = CORTEX_AGENT.chat(
+            user_message,
+            on_status=on_status_update,
+            conversation_history=history if history else None
+        )
 
         if thinking_ts and channel:
             try:
@@ -261,16 +310,22 @@ def process_message(event: dict, say, client):
                 client.chat_update(
                     channel=channel,
                     ts=thinking_ts,
+                    text="Thinking complete",
                     blocks=create_thinking_block("", steps, is_complete=True)
                 )
             except Exception:
                 pass
 
+        # Store conversation history for context
+        add_to_conversation(conversation_key, "user", user_message)
+        if response.get('text'):
+            add_to_conversation(conversation_key, "assistant", response['text'])
+
         response_blocks = create_response_blocks(response)
         if response_blocks:
             say(text="Response", blocks=response_blocks)
 
-        if response.get('sql_queries') and response.get('data'):
+        if response.get('sql_queries') and response.get('data') is not None:
             try:
                 chart_info = chart_gen.analyze_and_generate(
                     response['data'],
@@ -331,7 +386,7 @@ def handle_thinking_details(ack, body, client):
             }
         ]
 
-        client.chat_update(channel=channel, ts=ts, blocks=blocks)
+        client.chat_update(channel=channel, ts=ts, text="Thinking steps", blocks=blocks)
 
     except Exception as e:
         print(f"Error showing details: {e}")
@@ -351,6 +406,7 @@ def handle_hide_details(ack, body, client):
         client.chat_update(
             channel=channel,
             ts=ts,
+            text="Thinking complete",
             blocks=create_thinking_block("", steps, is_complete=True)
         )
 
